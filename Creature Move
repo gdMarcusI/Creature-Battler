@@ -1,0 +1,43 @@
+using UnityEngine;
+
+public class Move : BaseAbility
+{
+    protected string MoveName;
+    protected string MoveDesc;
+
+    public float moveBaseCooldwon;
+    protected float currentMoveCooldwon;
+
+    protected bool moveOnCooldown;
+
+    public enum InputType { Press = 1, Hold = 2, Charge = 3}
+
+    public InputType moveInput;
+
+    public override void DoAbility()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void TickMoveCooldown()
+    {
+        if (moveOnCooldown)
+        {
+            currentMoveCooldwon -= Time.deltaTime;
+            Debug.Log("cd ticking down");
+            if (currentMoveCooldwon <= 0)
+            {
+                moveOnCooldown = false;
+            }
+        }
+    }
+
+    public void PutMoveOnCooldown(float newCD = default(float))
+    {
+        if (!moveOnCooldown)
+        {
+            currentMoveCooldwon = newCD;
+            moveOnCooldown = true;
+        }
+    }
+}

@@ -1,0 +1,179 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BaseCreature : MonoBehaviour
+{
+    //Name and info
+    protected int CreatureNumber = 0;
+    protected string CreatureName = "";
+    protected string CreatureNickname = "";
+
+    //Base Stats
+    protected float CreatureBaseHP;
+
+    //Special Meter
+    protected float CreatureMeter;
+
+    //Creature move array. Needs the actual components on each creature so they're exposed in the inspector
+    [SerializeField]
+    protected Move[] CreatureMoves = new Move[2];
+
+    [SerializeField]
+    protected Overdrive CreatureOverDrive;
+
+    //Cooldowns base numbers and active temporary variables
+    protected float BaseCoolDownOnMoveOne;
+    protected float CurrentCooldownOnMoveOne;
+
+    protected float BaseCoolDownOnMoveTwo;
+    protected float CurrentCooldownOnMoveTwo;
+
+    //Cooldown bool switches
+    protected bool MoveOneIsOnCD;
+    protected bool MoveTwoIsOnCD;
+
+    //Special mechanics 
+    [SerializeField]
+    protected ShiftEffect CreatureShiftEffect;
+    protected Overdrive CreatureOverdrive;
+
+    //Components to deactivate
+    protected BoxCollider bCol;
+    protected MeshRenderer mRend;
+
+    //Elemental Type
+    public enum TYPE { Water = 1, Fire = 2, Nature = 3, Earth = 4, Storm = 5, Light = 6, Darkness = 7 }
+    protected List<TYPE> CreatureType = new List<TYPE>(2);
+
+    //Easy quick functions for using creatures moves
+    public void DoMoveOne()
+    {
+        CreatureMoves[0].DoAbility();
+    }
+
+    public void DoMoveTwo()
+    {
+        CreatureMoves[1].DoAbility();
+    }
+
+    //Funtions for setting the Cooldowns of the moves inside of the player controller
+    //I could and should add the ability to add a value from the player controler itself
+    //(float CD = defualt(flaot))
+    public void SetMoveOneCD()
+    {
+        CreatureMoves[0].PutMoveOnCooldown(CreatureMoves[0].moveBaseCooldwon);
+    }
+
+    public void SetMoveOTwoCD()
+    {
+        CreatureMoves[1].PutMoveOnCooldown(CreatureMoves[1].moveBaseCooldwon);
+    }
+
+    //Funtions to use our switch effect during each creatures specific switch in/out
+    public void UseSwitchEffect()
+    {
+        CreatureShiftEffect.DoAbility();
+    }
+
+    //Functions for CD countdown
+    /*protected void CooldownTickOne(float refreshedCooldown)
+    {
+        if (MoveOneIsOnCD)
+        {
+            CurrentCooldownOnMoveOne -= Time.deltaTime;
+            if (CurrentCooldownOnMoveOne <= 0)
+            {
+                MoveOneIsOnCD = false;
+                CurrentCooldownOnMoveOne = refreshedCooldown;
+            }
+        }
+    }
+
+    protected void CooldownTickTwo(float refreshedCooldown)
+    {
+        if (MoveTwoIsOnCD)
+        {
+            CurrentCooldownOnMoveTwo -= Time.deltaTime;
+            if (CurrentCooldownOnMoveTwo <= 0)
+            {
+                MoveTwoIsOnCD = false;
+                CurrentCooldownOnMoveTwo = refreshedCooldown;
+            }
+        }
+    }*/
+
+    //Cooldown reduction funtion to multiply our base by a modifier
+    public void ReduceCoolDown(float Amount)
+    {
+        CurrentCooldownOnMoveOne = BaseCoolDownOnMoveOne * Amount;
+    }
+
+    //Function for reading the creatures type
+    public void GetCreatureName()
+    {
+        Debug.Log(CreatureName);
+    }
+
+    //Creature type getter
+    public void OutputCreatureType()
+    {
+        if (CreatureType.Count != 0)
+        {
+            if (CreatureType.Count >= 1)
+            {
+                Debug.Log("Creature TYPE is " + CreatureType[0]);
+                if (CreatureType.Count >= 2)
+                {
+                    Debug.Log("And secondary TYPE is " + CreatureType[1]);
+                }
+            }
+        }
+    }
+
+    //This can return a null reference point so i have to add defensive perameters
+    public int OutputMoveType(int slot)
+    {
+        if (CreatureMoves[slot] != null)
+        {
+            int type = (int)CreatureMoves[slot].moveInput;
+
+            return type;
+        }
+        //Debug.Log("No move type currently gettable");
+        return 0;
+    }
+
+
+    //Turn off the renderer and colliders to set the creature as inactive but keep the script running
+    //This can be renamed to SwitchOut
+    public virtual void SetCreatureInactive()
+    {
+        if (GetComponent<MeshRenderer>() != false)
+        {
+            mRend = GetComponent<MeshRenderer>();
+            mRend.enabled = false;
+        }
+
+        if (GetComponent<BoxCollider>() != false)
+        {
+            bCol = GetComponent<BoxCollider>();
+            bCol.enabled = false;
+        }
+    }
+
+    //This can be renamed to SwitchIn
+    public virtual void SetCreatureActive()
+    {
+        if (GetComponent<MeshRenderer>() != false)
+        {
+            mRend = GetComponent<MeshRenderer>();
+            mRend.enabled = true;
+        }
+
+        if (GetComponent<BoxCollider>() != false)
+        {
+            bCol = GetComponent<BoxCollider>();
+            bCol.enabled = true;
+        }
+    }
+}

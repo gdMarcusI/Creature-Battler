@@ -1,0 +1,276 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [SerializeField]
+    private GameManager gManager;
+
+    //Input
+    private PlayerInput controls;
+    //Stuff for previous and current space
+    private Vector3 lastPos;
+    private Vector3 switchPos;
+
+    private int PressButton = 1;
+    private int HoldButton = 2;
+    private int ChargeButton = 3;
+
+    [SerializeField]
+    private GameObject activeCreature;
+
+    //Collections for creatures
+    [SerializeField]
+    private List<GameObject> creatureObjects = new List<GameObject>(3);
+    [SerializeField]
+    private List<BaseCreature> creatureTeam = new List<BaseCreature>(3);
+
+    [SerializeField]
+    private float moveSpeed;
+    [SerializeField]
+    float buffer;
+
+    public string defaultSpaceColor;
+
+    private RaycastHit spaceCheck;
+
+    void Start()
+    {
+        InitializeCreatures();
+
+        activeCreature = creatureObjects[0];
+
+        controls = GetComponent<PlayerInput>();
+
+        defaultSpaceColor = "Blue";
+
+        AddCreaturesToTeam();
+    }
+
+    void Update()
+    {
+        SwitchActiveCreature();
+
+        Move();
+
+        UseCreatureMoves();
+    }
+
+    private void Move()
+    {
+        //If we start using the rigidbody we have to change this to a FixedUpdate
+        if (controls.UP)
+        {
+            lastPos = activeCreature.transform.position;
+
+            Debug.DrawRay(activeCreature.transform.position, Vector3.left, Color.red, moveSpeed);
+
+            Ray leftRay = new Ray(activeCreature.transform.position, Vector3.left);
+            if (Physics.Raycast(leftRay, out spaceCheck, moveSpeed))
+            {
+                if (spaceCheck.collider.gameObject.tag == "Neutral" || spaceCheck.collider.gameObject.tag == defaultSpaceColor)
+                {
+                    activeCreature.transform.position = new Vector3(spaceCheck.collider.gameObject.transform.position.x, spaceCheck.collider.gameObject.transform.position.y + buffer, spaceCheck.collider.gameObject.transform.position.z);
+                }
+            }
+        }
+        else if (controls.DOWN)
+        {
+            lastPos = activeCreature.transform.position;
+
+            Debug.DrawRay(activeCreature.transform.position, Vector3.right, Color.red, moveSpeed);
+
+            Ray rightRay = new Ray(activeCreature.transform.position, Vector3.right);
+            if (Physics.Raycast(rightRay, out spaceCheck, moveSpeed))
+            {
+                if (spaceCheck.collider.gameObject.tag == "Neutral" || spaceCheck.collider.gameObject.tag == defaultSpaceColor)
+                {
+                    activeCreature.transform.position = new Vector3(spaceCheck.collider.gameObject.transform.position.x, spaceCheck.collider.gameObject.transform.position.y + buffer, spaceCheck.collider.gameObject.transform.position.z);
+                }
+            }
+        }
+        else if (controls.LEFT)
+        {
+            lastPos = activeCreature.transform.position;
+
+            Debug.DrawRay(activeCreature.transform.position, Vector3.back, Color.red, moveSpeed);
+
+            Ray backRay = new Ray(activeCreature.transform.position, Vector3.back);
+            if (Physics.Raycast(backRay, out spaceCheck, moveSpeed))
+            {
+                if (spaceCheck.collider.gameObject.tag == "Neutral" || spaceCheck.collider.gameObject.tag == defaultSpaceColor)
+                {
+                    activeCreature.transform.position = new Vector3(spaceCheck.collider.gameObject.transform.position.x, spaceCheck.collider.gameObject.transform.position.y + buffer, spaceCheck.collider.gameObject.transform.position.z);
+                }
+            }
+        }
+        else if (controls.RIGHT)
+        {
+            lastPos = activeCreature.transform.position;
+
+            Debug.DrawRay(activeCreature.transform.position, Vector3.forward, Color.red, moveSpeed);
+
+            Ray forwardRay = new Ray(activeCreature.transform.position, Vector3.forward);
+            if (Physics.Raycast(forwardRay, out spaceCheck, moveSpeed))
+            {
+                if (spaceCheck.collider.gameObject.tag == "Neutral" || spaceCheck.collider.gameObject.tag == defaultSpaceColor)
+                {
+                    activeCreature.transform.position = new Vector3(spaceCheck.collider.gameObject.transform.position.x, spaceCheck.collider.gameObject.transform.position.y + buffer, spaceCheck.collider.gameObject.transform.position.z);
+                }
+            }
+        }
+    }
+
+    private void UseCreatureMoves()
+    {
+        //Remember that later one we have to actually place a limiter or timer of some kind to make it so the creature has to finish
+        //an animation before they can do another move
+        //If its a single press just use the ability on normal press
+        if (activeCreature.GetComponent<BaseCreature>().OutputMoveType(0) == PressButton)
+        {
+            if (controls.MoveOne)
+            {
+                activeCreature.GetComponent<BaseCreature>().DoMoveOne();
+                activeCreature.GetComponent<BaseCreature>().SetMoveOneCD();
+            }
+        }
+        //If its a hold move we just use the ability as long as we're holding the button
+        //We'll put the limit for the move inside the move itself
+        else if (activeCreature.GetComponent<BaseCreature>().OutputMoveType(0) == HoldButton)
+        {
+            if (controls.MoveOneHold)
+            {
+                activeCreature.GetComponent<BaseCreature>().DoMoveOne();
+            }
+        }
+        //Check if we're holding down the buttons so we can run some kind of charge function
+        else if (activeCreature.GetComponent<BaseCreature>().OutputMoveType(0) == ChargeButton)
+        {
+            if (controls.MoveOneHold)
+            {
+                //Run creature charge move function here
+
+                if (controls.MoveOneChargeRelease)
+                {
+                    //Release charged up move here
+                }
+            }
+        }
+        else
+        if (activeCreature.GetComponent<BaseCreature>().OutputMoveType(1) == PressButton)
+        {
+            if (controls.MoveTwo)
+            {
+                activeCreature.GetComponent<BaseCreature>().DoMoveTwo();
+            }
+        }
+    }
+
+    private void AddCreaturesToTeam()
+    {
+        for (int i = 0; i < creatureObjects.Count; i++)
+        {
+            creatureTeam.Add(creatureObjects[i].gameObject.GetComponent<BaseCreature>());
+            if (creatureTeam.Count >= 3)
+            {
+                creatureTeam[0].gameObject.GetComponent<BaseCreature>().GetCreatureName();
+                creatureTeam[1].gameObject.GetComponent<BaseCreature>().GetCreatureName();
+                creatureTeam[2].gameObject.GetComponent<BaseCreature>().GetCreatureName();
+            }
+        }
+    }
+
+    //!Add a CD to switching
+    //!Add a value we can alter at runtime for our CD 
+    private void SwitchActiveCreature()
+    {
+        if (creatureObjects.Count >= 1)
+        {
+            if (controls.TriggerOne)
+            {
+                if (activeCreature != creatureObjects[0])
+                {
+                    switchPos = activeCreature.transform.position;
+
+                    ////activeCreature.SetActive(false);
+                    activeCreature.GetComponent<BaseCreature>().SetCreatureInactive();
+
+                    //creatureObjects[0].SetActive(true);
+                    creatureObjects[0].GetComponent<BaseCreature>().SetCreatureActive();
+
+
+                    activeCreature = creatureObjects[0];
+                    activeCreature.transform.position = lastPos;
+                    activeCreature.transform.position = switchPos;
+                }
+            }
+            if (creatureObjects.Count >= 2)
+            {
+                if (controls.TriggerTwo)
+                {
+                    if (activeCreature != creatureObjects[1])
+                    {
+                        switchPos = activeCreature.transform.position;
+
+                        //activeCreature.SetActive(false);
+                        activeCreature.GetComponent<BaseCreature>().SetCreatureInactive();
+
+                        //creatureObjects[1].SetActive(true);
+                        creatureObjects[1].GetComponent<BaseCreature>().SetCreatureActive();
+
+                        activeCreature = creatureObjects[1];
+                        activeCreature.transform.position = switchPos;
+                    }
+                }
+            }
+
+            if (creatureObjects.Count >= 3)
+            {
+                if (controls.TriggerThree)
+                {
+                    if (activeCreature != creatureObjects[2])
+                    {
+                        switchPos = activeCreature.transform.position;
+
+                        //activeCreature.SetActive(false);
+                        activeCreature.GetComponent<BaseCreature>().SetCreatureInactive();
+
+                        //creatureObjects[2].SetActive(true);
+                        creatureObjects[2].GetComponent<BaseCreature>().SetCreatureActive();
+
+                        activeCreature = creatureObjects[2];
+                        activeCreature.transform.position = lastPos;
+                        activeCreature.transform.position = switchPos;
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("ERROR: No Team Memebers");
+        }
+    }
+
+    private void InitializeCreatures()
+    {
+        //This is where we'll spawn the creatures to the center space and deactivate the "non-active" creatures
+        if (gManager.PassPlayerCreatureList().Count > 0)
+        {
+            //Add all of them and turn off the 2 that aren't active
+            //First
+            creatureObjects[0] = Instantiate(gManager.PassPlayerCreatureList()[0], new Vector3(transform.position.x, transform.position.y - .04f, transform.position.z), Quaternion.identity);
+            creatureObjects[0].transform.parent = transform;
+            activeCreature = creatureObjects[0];
+            //Second
+            //We changed the simple SetActive(false) to just targetting specific components
+            creatureObjects[1] = Instantiate(gManager.PassPlayerCreatureList()[1], new Vector3(transform.position.x, transform.position.y, transform.position.z), Quaternion.identity);
+            creatureObjects[1].transform.parent = transform;
+            creatureObjects[1].GetComponent<BaseCreature>().SetCreatureInactive();
+
+            //Third
+            creatureObjects[2] = Instantiate(gManager.PassPlayerCreatureList()[2], new Vector3(transform.position.x, transform.position.y, transform.position.z), Quaternion.identity);
+            creatureObjects[2].transform.parent = transform;
+            creatureObjects[2].GetComponent<BaseCreature>().SetCreatureInactive();
+        }
+    }
+}
